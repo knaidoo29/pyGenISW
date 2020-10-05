@@ -23,7 +23,7 @@ class SphericalHarmonicISW(TheoryCL.CosmoLinearGrowth()):
 
 
     def Wiener_filter(self, alm_den, cl_td, cl_dd):
-        """Returns the ISW from the alms of the density contrast of a single slice using
+        """Returns the ISW alms from the alms of the density contrast of a single slice using
         Wiener filtering.
 
         Parameters
@@ -53,7 +53,7 @@ class SphericalHarmonicISW(TheoryCL.CosmoLinearGrowth()):
 
 
     def Francis_Peacock(self, alm_den, zmin, zmax):
-        """Returns the ISW from the alms of the density contrast of a single slice using
+        """Returns the ISW alms from the alms of the density contrast of a single slice using
         the Francis & Peacock (2009) approximation (see https://arxiv.org/abs/0909.2494).
 
         Parameters

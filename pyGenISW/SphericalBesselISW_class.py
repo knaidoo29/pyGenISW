@@ -109,10 +109,7 @@ class SphericalBesselISW(TheoryCL.CosmoLinearGrowth):
             self.boundary_conditions = boundary_conditions
         else:
             print("boundary_conditions can only be 'normal' or 'derivative', not", boundary_conditions)
-        """if npart is not None and vol is not None:
-            self.sim_dens = npart/vol
-        else:
-            self.sim_dens = None"""
+
 
     def slice2alm(self, map_slice, index):
         """Given a density contrast map and its corresponding index (for its
@@ -128,44 +125,9 @@ class SphericalBesselISW(TheoryCL.CosmoLinearGrowth):
         """
         if index in self.slice_in_range:
             map_ = map_slice
-            #r_eff = (3./4.)*(self.sbt_redge_max[index]**4. - self.sbt_redge_min[index]**4.)/(self.sbt_redge_max[index]**3. - self.sbt_redge_min[index]**3.)
-            # pixel window function
             wl = hp.sphtfunc.pixwin(hp.get_nside(map_), lmax=self.sbt_lmax)
-            """
-            if smoothing_scale is not None:
-                smoothing_theta = np.arcsin(smoothing_scale/r_eff)
-                if np.isfinite(smoothing_theta) == True:
-                    l = np.arange(self.sbt_lmax + 1)
-                    # Gaussian beam smoothing function
-                    bl = 2.*np.pi*(smoothing_theta**2.)*np.exp(-l*(l+1.)*(smoothing_theta**2.)/2.)
-                    bl /= bl[1]
-                    # apply Gaussian smoothing to map
-                    map_ = hp.smoothing(map_, sigma=smoothing_theta, verbose=False)
-                    alm = hp.map2alm(map_, lmax=self.sbt_lmax, verbose=False)
-                    wb = 1./(wl*bl)
-                    condition = np.where(bl <= 1e-6)[0]
-                    wb[condition] = 0.
-                    alm = hp.almxfl(alm, wb)
-                else:
-                    # if the smoothing_theta is not finite it means the radius is
-                    # below the comoving distance smoothing scale in which case
-                    # the alms are set to zero
-                    alm = hp.map2alm(map_, lmax=self.sbt_lmax, verbose=False)
-                    alm = hp.almxfl(alm, np.zeros(self.sbt_lmax+1))
-            else:
-            """
             alm = hp.map2alm(map_, lmax=self.sbt_lmax, verbose=False)
             alm = hp.almxfl(alm, 1./wl)
-            """condition = np.where((np.isfinite(alm.real) == False) | (np.isfinite(alm.imag) == False))[0]
-            alm[condition] = 0.
-            # set alm scales which correspond to nonlinear features to zero, important
-            # as Gaussian beam and pixel window function cause large modes to rise
-            theta_min = 2.*np.arcsin(np.pi/(self.sbt_kmin*r_eff))
-            lmax = 2.*np.pi/theta_min
-            cut_nonlinear = np.ones(self.sbt_lmax+1)
-            condition = np.where(np.arange(self.sbt_lmax+1) > lmax)[0]
-            cut_nonlinear[condition] = 0.
-            alm = hp.almxfl(alm, cut_nonlinear)"""
             condition = np.where(self.slice_in_range == index)[0]
             np.savetxt(self.temp_path+'map_alm_'+str(condition[0])+'.txt', np.dstack((alm.real, alm.imag))[0])
         else:
@@ -254,8 +216,6 @@ class SphericalBesselISW(TheoryCL.CosmoLinearGrowth):
             index = self.slice_in_range[which_slice]
             r_eff = (3./4.)*(self.sbt_redge_max[index]**4. - self.sbt_redge_min[index]**4.)/(self.sbt_redge_max[index]**3. - self.sbt_redge_min[index]**3.)
             Dz_eff = self.get_Dr(r_eff)
-            #r = np.linspace(self.sbt_redge_min[index], self.sbt_redge_max[index], 100)
-            #Dz = self.get_Dr(r)
             Sln = np.zeros(np.shape(self.kln_grid))
             for i in range(0, len(l_grid)):
                 if self.sbt_kmin is None and self.sbt_kmax is None:
@@ -267,12 +227,6 @@ class SphericalBesselISW(TheoryCL.CosmoLinearGrowth):
                 else:
                     condition = np.where((self.kln_grid[i] >= self.sbt_kmin) & (self.kln_grid[i] <= self.sbt_kmax))[0]
                 if len(condition) != 0:
-                    #if self.uselightcone == True:
-                    #    Sln[i, condition] += np.array([(1./np.sqrt(self.Nln_grid_masked[i][j]))*integrate.simps((1./Dz)*bessel_utility.get_jl(self.kln_grid_masked[i][j]*r, self.l_grid_masked[i][j])*r**2., r) for j in range(0, len(self.l_grid_masked[i]))])
-                    #else:
-                    #Sln[i, condition] += np.array([(1./np.sqrt(self.Nln_grid_masked[i][j]))*integrate.simps(bessel_utility.get_jl(self.kln_grid_masked[i][j]*r, self.l_grid_masked[i][j])*r**2., r) for j in range(0, len(self.l_grid_masked[i]))])
-                    #_xmin = self.kln_grid_masked[i][j]*self.sbt_redge_min[index]
-                    #_xmax = self.kln_grid_maxked[i][j]*self.sbt_redge_max[index]
                     Sln[i, condition] += np.array([(1./(np.sqrt(self.Nln_grid_masked[i][j])*self.kln_grid_masked[i][j]**3.))*(_interpolate_jl_int[i](self.kln_grid_masked[i][j]*self.sbt_redge_max[index]) - _interpolate_jl_int[i](self.kln_grid_masked[i][j]*self.sbt_redge_min[index])) for j in range(0, len(self.l_grid_masked[i]))])
             data = np.loadtxt(self.temp_path + 'map_alm_'+str(which_slice)+'.txt', unpack=True)
             delta_lm_real = data[0]
@@ -306,19 +260,8 @@ class SphericalBesselISW(TheoryCL.CosmoLinearGrowth):
                 conditions2 = np.array(conditions2, dtype=object)
             for i in range(0, len(Sln[0])):
                 _delta_lmn = np.zeros(len(delta_lm), dtype='complex')
-                """if self.sbt_kmin is None and self.sbt_kmax is None:
-                    condition = np.arange(len(self.kln_grid[:, i]))
-                elif self.sbt_kmin is None:
-                    condition = np.where(self.kln_grid[:, i] <= self.sbt_kmax)[0]
-                elif self.sbt_kmax is None:
-                    condition = np.where(self.kln_grid[:, i] >= self.sbt_kmin)[0]
-                else:
-                    condition = np.where((self.kln_grid[:, i] >= self.sbt_kmin) & (self.kln_grid[:, i] <= self.sbt_kmax))[0]
-                condition1 = np.where(self.l_grid[:, i] <= self.l_grid[condition, i].max())[0]
-                condition2 = np.where(l_map <= self.l_grid[condition, i].max())[0]"""
                 _delta_lmn[conditions2[i]] = hp.almxfl(delta_lm[conditions2[i]], np.concatenate([np.zeros(2), Sln[conditions1[i], i]]))
                 delta_lmn[i] += _delta_lmn
-            #np.array([hp.almxfl(delta_lm, np.concatenate([np.zeros(2), Sln[:, i]])) for i in range(0, len(Sln[0]))])
             TheoryCL.progress_bar(which_slice, len(self.slice_in_range), indexing=True, num_refresh=len(self.slice_in_range))
         self.delta_lmn = delta_lmn
 
