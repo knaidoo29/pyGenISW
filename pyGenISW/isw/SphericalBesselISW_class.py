@@ -4,8 +4,8 @@ import healpy as hp
 import subprocess
 import TheoryCL
 
-from . import file_management
-from . import bessel_utility
+from .. import utils
+from .. import bessel
 
 
 class SphericalBesselISW(TheoryCL.CosmoLinearGrowth):
@@ -104,7 +104,7 @@ class SphericalBesselISW(TheoryCL.CosmoLinearGrowth):
         self.sbt_redge_max = TheoryCL.get_r(self.sbt_zedge_max, self.omega_m, self.omega_l)
         self.uselightcone = uselightcone
         self.temp_path = temp_path
-        file_management.create_folder(self.temp_path)
+        utils.create_folder(self.temp_path)
         if boundary_conditions == 'normal' or boundary_conditions == 'derivative':
             self.boundary_conditions = boundary_conditions
         else:
@@ -148,26 +148,26 @@ class SphericalBesselISW(TheoryCL.CosmoLinearGrowth):
             l_val = self.l_grid[i][0]
             if i < 10:
                 if self.boundary_conditions == 'normal':
-                    qln_grid[i] = bessel_utility.get_qln(l_val, self.sbt_nmax, nstop=100)
+                    qln_grid[i] = bessel.get_qln(l_val, self.sbt_nmax, nstop=100)
                 elif self.boundary_conditions == 'derivative':
-                    qln_grid[i] = bessel_utility.get_der_qln(l_val, self.sbt_nmax, nstop=100)
+                    qln_grid[i] = bessel.get_der_qln(l_val, self.sbt_nmax, nstop=100)
             else:
                 if self.boundary_conditions == 'normal':
-                    qln_grid[i] = bessel_utility.get_qln(l_val, self.sbt_nmax, nstop=100,
-                                                         zerolminus1=qln_grid[i-1],
-                                                         zerolminus2=qln_grid[i-2])
+                    qln_grid[i] = bessel.get_qln(l_val, self.sbt_nmax, nstop=100,
+                                                 zerolminus1=qln_grid[i-1],
+                                                 zerolminus2=qln_grid[i-2])
                 elif self.boundary_conditions == 'derivative':
-                    qln_grid[i] = bessel_utility.get_der_qln(l_val, self.sbt_nmax, nstop=100,
-                                                             zerolminus1=qln_grid[i-1],
-                                                             zerolminus2=qln_grid[i-2])
+                    qln_grid[i] = bessel.get_der_qln(l_val, self.sbt_nmax, nstop=100,
+                                                     zerolminus1=qln_grid[i-1],
+                                                     zerolminus2=qln_grid[i-2])
             TheoryCL.progress_bar(i, len(self.l_grid))
         self.kln_grid = qln_grid/self.sbt_rmax
         print('Constructing l and n value grid')
         if self.boundary_conditions == 'normal':
-            self.Nln_grid = ((self.sbt_rmax**3.)/2.)*bessel_utility.get_jl(self.kln_grid*self.sbt_rmax, self.l_grid+1)**2.
+            self.Nln_grid = ((self.sbt_rmax**3.)/2.)*bessel.get_jl(self.kln_grid*self.sbt_rmax, self.l_grid+1)**2.
         elif self.boundary_conditions == 'derivative':
             self.Nln_grid = ((self.sbt_rmax**3.)/2.)*(1. - self.l_grid*(self.l_grid+1.)/((self.kln_grid*self.sbt_rmax)**2.))
-            self.Nln_grid *= bessel_utility.get_jl(self.kln_grid*self.sbt_rmax, self.l_grid)**2.
+            self.Nln_grid *= bessel.get_jl(self.kln_grid*self.sbt_rmax, self.l_grid)**2.
         if self.sbt_kmin is None and self.sbt_kmax is None:
             l_grid_masked = self.l_grid
             n_grid_masked = self.n_grid
@@ -208,7 +208,7 @@ class SphericalBesselISW(TheoryCL.CosmoLinearGrowth):
             _xmax = (self.kln_grid_masked[i]*self.sbt_rmax).max() + 1.
             _x = np.linspace(_xmin, _xmax, 10000)
             _jl_int = np.zeros(len(_x))
-            _jl_int[1:] = integrate.cumtrapz((_x**2.)*bessel_utility.get_jl(_x, l_grid[i][0]), _x)
+            _jl_int[1:] = integrate.cumtrapz((_x**2.)*bessel.get_jl(_x, l_grid[i][0]), _x)
             _interpolate_jl_int.append(interpolate.interp1d(_x, _jl_int, kind='cubic', bounds_error=False, fill_value=0.))
             TheoryCL.progress_bar(i, len(self.l_grid_masked))
         print('Computing spherical Bessel Transform from spherical harmonics')
@@ -315,7 +315,7 @@ class SphericalBesselISW(TheoryCL.CosmoLinearGrowth):
             else:
                 condition = np.where((self.kln_grid[i] >= self.sbt_kmin) & (self.kln_grid[i] <= self.sbt_kmax))[0]
             if len(condition) != 0:
-                Iln[i, condition] += np.array([(1./np.sqrt(self.Nln_grid_masked[i][j]))*integrate.simps(DHF*bessel_utility.get_jl(self.kln_grid_masked[i][j]*r, self.l_grid_masked[i][j]), r) for j in range(0, len(self.l_grid_masked[i]))])
+                Iln[i, condition] += np.array([(1./np.sqrt(self.Nln_grid_masked[i][j]))*integrate.simps(DHF*bessel.get_jl(self.kln_grid_masked[i][j]*r, self.l_grid_masked[i][j]), r) for j in range(0, len(self.l_grid_masked[i]))])
             TheoryCL.progress_bar(i, len(self.kln_grid))
         alm_isw = np.zeros(len(self.delta_lmn[0]), dtype='complex')
         for i in range(0, len(self.delta_lmn)):

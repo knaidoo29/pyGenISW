@@ -1,9 +1,10 @@
 import numpy as np
 import healpy as hp
+from scipy import integrate
 import TheoryCL
 
 
-class SphericalHarmonicISW(TheoryCL.CosmoLinearGrowth()):
+class SphericalHarmonicISW(TheoryCL.CosmoLinearGrowth):
 
     """Class for computing the ISW approximately using the spherical harmonics of
     a map of the density contrast.
@@ -52,7 +53,7 @@ class SphericalHarmonicISW(TheoryCL.CosmoLinearGrowth()):
         return alm_t
 
 
-    def Francis_Peacock(self, alm_den, zmin, zmax):
+    def Francis_Peacock(self, alm_den, zmin, zmax, mode=False):
         """Returns the ISW alms from the alms of the density contrast of a single slice using
         the Francis & Peacock (2009) approximation (see https://arxiv.org/abs/0909.2494).
 
@@ -64,6 +65,10 @@ class SphericalHarmonicISW(TheoryCL.CosmoLinearGrowth()):
             Minimum redshift for the slice.
         zmax : array
             Maximum redshift for the slice.
+        mode : int
+            1 -- uses the approximation as given in Francis & Peacock (2009),
+            2 -- uses (r_max^3 - r_min^3)/3 instead of delta_r*r_eff^2.
+            3 -- integrates H*(1-f)*r^2
 
         Returns
         -------
@@ -72,16 +77,29 @@ class SphericalHarmonicISW(TheoryCL.CosmoLinearGrowth()):
         """
         rmin = self.get_rz(zmin)
         rmax = self.get_rz(zmax)
-        reff = (3./4.)*(rmax**4. - rmin**4.)/(rmax**3. - rmin**3.)
-        zeff = self.get_zr(reff)
-        delta_r = rmax - rmin
-        Heff = self.get_Hz(zeff)
-        feff = self.get_fz(zeff)
-        fl = 3.*((1e2*self.h0)**2.)*self.omega_m*Heff*(1.-feff)*(reff**2.)*delta_r
-        lmax = hp.Alm.getlmax(alm_den)
-        l = np.arange(lmax+1).astype('float')
+        if mode == 1:
+            reff = (3./4.)*(rmax**4. - rmin**4.)/(rmax**3. - rmin**3.)
+            zeff = self.get_zr(reff)
+            delta_r = rmax - rmin
+            Heff = self.get_Hz(zeff)
+            feff = self.get_fz(zeff)
+            fl = 3.*((1e2*self.h0)**2.)*self.omega_m*Heff*(1.-feff)
+            fl *= delta_r * reff**2.
+        elif mode == 2:
+            reff = (3./4.)*(rmax**4. - rmin**4.)/(rmax**3. - rmin**3.)
+            zeff = self.get_zr(reff)
+            Heff = self.get_Hz(zeff)
+            feff = self.get_fz(zeff)
+            fl = 3.*((1e2*self.h0)**2.)*self.omega_m*Heff*(1.-feff)
+            fl *= (rmax**3. - rmin**3.)/3.
+        elif mode == 3:
+            r = np.linspace(rmin, rmax, 1000)
+            fl = 3.*((1e2*self.h0)**2.)*self.omega_m*integrate.simps(self.get_Hr(r)*(1.-self.get_fr(r))*r**2., r)
+        lmax = hp.Alm.getlmax(len(alm_den))
+        l = np.arange(lmax+1).astype('float')[2:]
         fl /= l*(l+1)*self.C**3.
         # units
         fl *= 1e9/(self.h0**3.)
+        fl = np.concatenate([np.zeros(2), fl])
         alm_t = hp.almxfl(alm_den, fl)
         return alm_t
