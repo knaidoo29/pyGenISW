@@ -88,8 +88,8 @@ class SphericalBesselISW(TheoryCL.CosmoLinearGrowth):
         self.sbt_zedge_min = zedge_min
         self.sbt_zedge_max = zedge_max
         self.slice_in_range = np.where((self.sbt_zedge_min <= self.sbt_zmax))[0]
-        self.sbt_rmin = TheoryCL.get_r(self.sbt_zmin, self.omega_m, self.omega_l)
-        self.sbt_rmax = TheoryCL.get_r(self.sbt_zmax, self.omega_m, self.omega_l)
+        self.sbt_rmin = TheoryCL.get_r(self.sbt_zmin, self.omega_m, self.omega_l, self.omega_r)
+        self.sbt_rmax = TheoryCL.get_r(self.sbt_zmax, self.omega_m, self.omega_l, self.omega_r)
         self.sbt_kmin = kmin
         self.sbt_kmax = kmax
         if lmax is None:
@@ -100,8 +100,8 @@ class SphericalBesselISW(TheoryCL.CosmoLinearGrowth):
             self.sbt_nmax = int(self.sbt_rmax*self.sbt_kmax/np.pi) + 1
         else:
             self.sbt_nmax = nmax
-        self.sbt_redge_min = TheoryCL.get_r(self.sbt_zedge_min, self.omega_m, self.omega_l)
-        self.sbt_redge_max = TheoryCL.get_r(self.sbt_zedge_max, self.omega_m, self.omega_l)
+        self.sbt_redge_min = TheoryCL.get_r(self.sbt_zedge_min, self.omega_m, self.omega_l, self.omega_r)
+        self.sbt_redge_max = TheoryCL.get_r(self.sbt_zedge_max, self.omega_m, self.omega_l, self.omega_r)
         self.uselightcone = uselightcone
         self.temp_path = temp_path
         utils.create_folder(self.temp_path)
