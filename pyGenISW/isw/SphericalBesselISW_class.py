@@ -22,7 +22,7 @@ class SphericalBesselISW(TheoryCL.CosmoLinearGrowth):
         CosmoLinearGrowth : class
             Parent class for calculating Cosmological linear growth functions.
         """
-        CosmoLinearGrowth.__init__()
+        super(SphericalBesselISW, self).__init__()
         self.Tcmb = 2.7255
         self.C = 3e8
         self.temp_path = None
