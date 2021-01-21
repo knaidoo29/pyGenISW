@@ -1,5 +1,9 @@
 # pyGenISW
 
+Author:         Krishna Naidoo                          
+Version:        0.0.0                               
+Homepage:       https://github.com/knaidoo29/pyGenISW    
+
 Computes the Integrated Sachs-Wolfe using spherical Bessel transforms for data
 provided in healpix redshift slices.
 
