@@ -14,7 +14,7 @@ class SphericalBesselISW(TheoryCL.CosmoLinearGrowth):
     of the density contrast given in redshift slices.
     """
 
-    def __init__(self, CosmoLinearGrowth):
+    def __init__(self):
         """Initialises the class.
 
         Parameters
@@ -22,7 +22,7 @@ class SphericalBesselISW(TheoryCL.CosmoLinearGrowth):
         CosmoLinearGrowth : class
             Parent class for calculating Cosmological linear growth functions.
         """
-        super(SphericalBesselISW, self).__init__()
+        TheoryCL.CosmoLinearGrowth.__init__(self)
         self.Tcmb = 2.7255
         self.C = 3e8
         self.temp_path = None
@@ -88,8 +88,8 @@ class SphericalBesselISW(TheoryCL.CosmoLinearGrowth):
         self.sbt_zedge_min = zedge_min
         self.sbt_zedge_max = zedge_max
         self.slice_in_range = np.where((self.sbt_zedge_min <= self.sbt_zmax))[0]
-        self.sbt_rmin = TheoryCL.get_r(self.sbt_zmin, self.omega_m, self.omega_l, self.omega_r)
-        self.sbt_rmax = TheoryCL.get_r(self.sbt_zmax, self.omega_m, self.omega_l, self.omega_r)
+        self.sbt_rmin = TheoryCL.growth.get_r(self.sbt_zmin, self.omega_m, self.omega_l, self.omega_r)
+        self.sbt_rmax = TheoryCL.growth.get_r(self.sbt_zmax, self.omega_m, self.omega_l, self.omega_r)
         self.sbt_kmin = kmin
         self.sbt_kmax = kmax
         if lmax is None:
@@ -100,8 +100,8 @@ class SphericalBesselISW(TheoryCL.CosmoLinearGrowth):
             self.sbt_nmax = int(self.sbt_rmax*self.sbt_kmax/np.pi) + 1
         else:
             self.sbt_nmax = nmax
-        self.sbt_redge_min = TheoryCL.get_r(self.sbt_zedge_min, self.omega_m, self.omega_l, self.omega_r)
-        self.sbt_redge_max = TheoryCL.get_r(self.sbt_zedge_max, self.omega_m, self.omega_l, self.omega_r)
+        self.sbt_redge_min = TheoryCL.growth.get_r(self.sbt_zedge_min, self.omega_m, self.omega_l, self.omega_r)
+        self.sbt_redge_max = TheoryCL.growth.get_r(self.sbt_zedge_max, self.omega_m, self.omega_l, self.omega_r)
         self.uselightcone = uselightcone
         self.temp_path = temp_path
         utils.create_folder(self.temp_path)
@@ -160,7 +160,7 @@ class SphericalBesselISW(TheoryCL.CosmoLinearGrowth):
                     qln_grid[i] = bessel.get_der_qln(l_val, self.sbt_nmax, nstop=100,
                                                      zerolminus1=qln_grid[i-1],
                                                      zerolminus2=qln_grid[i-2])
-            TheoryCL.progress_bar(i, len(self.l_grid))
+            TheoryCL.utils.progress_bar(i, len(self.l_grid))
         self.kln_grid = qln_grid/self.sbt_rmax
         print('Constructing l and n value grid')
         if self.boundary_conditions == 'normal':
@@ -210,7 +210,7 @@ class SphericalBesselISW(TheoryCL.CosmoLinearGrowth):
             _jl_int = np.zeros(len(_x))
             _jl_int[1:] = integrate.cumtrapz((_x**2.)*bessel.get_jl(_x, l_grid[i][0]), _x)
             _interpolate_jl_int.append(interpolate.interp1d(_x, _jl_int, kind='cubic', bounds_error=False, fill_value=0.))
-            TheoryCL.progress_bar(i, len(self.l_grid_masked))
+            TheoryCL.utils.progress_bar(i, len(self.l_grid_masked))
         print('Computing spherical Bessel Transform from spherical harmonics')
         for which_slice in range(0, len(self.slice_in_range)):
             index = self.slice_in_range[which_slice]
@@ -262,7 +262,7 @@ class SphericalBesselISW(TheoryCL.CosmoLinearGrowth):
                 _delta_lmn = np.zeros(len(delta_lm), dtype='complex')
                 _delta_lmn[conditions2[i]] = hp.almxfl(delta_lm[conditions2[i]], np.concatenate([np.zeros(2), Sln[conditions1[i], i]]))
                 delta_lmn[i] += _delta_lmn
-            TheoryCL.progress_bar(which_slice, len(self.slice_in_range), indexing=True, num_refresh=len(self.slice_in_range))
+            TheoryCL.utils.progress_bar(which_slice, len(self.slice_in_range), indexing=True, num_refresh=len(self.slice_in_range))
         self.delta_lmn = delta_lmn
 
     def save_sbt(self, prefix=None):
@@ -316,7 +316,7 @@ class SphericalBesselISW(TheoryCL.CosmoLinearGrowth):
                 condition = np.where((self.kln_grid[i] >= self.sbt_kmin) & (self.kln_grid[i] <= self.sbt_kmax))[0]
             if len(condition) != 0:
                 Iln[i, condition] += np.array([(1./np.sqrt(self.Nln_grid_masked[i][j]))*integrate.simps(DHF*bessel.get_jl(self.kln_grid_masked[i][j]*r, self.l_grid_masked[i][j]), r) for j in range(0, len(self.l_grid_masked[i]))])
-            TheoryCL.progress_bar(i, len(self.kln_grid))
+            TheoryCL.utils.progress_bar(i, len(self.kln_grid))
         alm_isw = np.zeros(len(self.delta_lmn[0]), dtype='complex')
         for i in range(0, len(self.delta_lmn)):
             alm_isw += hp.almxfl(self.delta_lmn[i], np.concatenate([np.zeros(2), Iln[:, i]/(self.kln_grid[:, i]**2.)]))

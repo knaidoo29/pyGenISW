@@ -1,7 +1,7 @@
 # pyGenISW
 
 Author:         Krishna Naidoo                          
-Version:        0.0.0                               
+Version:        1.0.0                               
 Homepage:       https://github.com/knaidoo29/pyGenISW    
 
 Computes the Integrated Sachs-Wolfe using spherical Bessel transforms for data
@@ -42,7 +42,6 @@ python setup.py install
 ```
 import numpy as np
 import healpy as hp
-import TheoryCL
 import pyGenISW
 
 # setup basic cosmology using the TheoryCL package and creating look up tables
@@ -56,7 +55,7 @@ zmax_lookup         = 10.               # maximum redshift for lookup table
 zbin_num            = 10000             # number of points in the lookup table
 zbin_mode           = 'log'             # either 'linear' or 'log' binnings in z (log means log of 1+z)
 
-GISW = pyGenISW.GenISW(TheoryCL.CosmoLinearGrowth())
+GISW = pyGenISW.isw.SphericalBesselISW()
 GISW.cosmo(omega_m=omega_m, omega_l=omega_l, h0=h0)
 GISW.calc_table(zmin=zmin_lookup, zmax=zmax_lookup, zbin_num=zbin_num, zbin_mode=zbin_mode)
 

@@ -18,7 +18,7 @@ class SphericalHarmonicISW(TheoryCL.CosmoLinearGrowth):
         CosmoLinearGrowth : class
             Parent class for calculating Cosmological linear growth functions.
         """
-        super(SphericalHarmonicISW, self).__init__()
+        TheoryCL.CosmoLinearGrowth.__init__(self)
         self.Tcmb = 2.7255
         self.C = 3e8
 
