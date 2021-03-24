@@ -10,7 +10,7 @@ class SphericalHarmonicISW(TheoryCL.CosmoLinearGrowth):
     a map of the density contrast.
     """
 
-    def __init__(self, CosmoLinearGrowth):
+    def __init__(self):
         """Initialises the class.
 
         Parameters
@@ -23,7 +23,7 @@ class SphericalHarmonicISW(TheoryCL.CosmoLinearGrowth):
         self.C = 3e8
 
 
-    def Wiener_filter(self, alm_den, cl_td, cl_dd):
+    def Spherical_Harmonic_Scaling(self, alm_den, cl_td, cl_dd):
         """Returns the ISW alms from the alms of the density contrast of a single slice using
         Wiener filtering.
 

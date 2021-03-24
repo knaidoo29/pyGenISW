@@ -260,10 +260,11 @@ class SphericalBesselISW(TheoryCL.CosmoLinearGrowth):
                 conditions2 = np.array(conditions2, dtype=object)
             for i in range(0, len(Sln[0])):
                 _delta_lmn = np.zeros(len(delta_lm), dtype='complex')
-                _delta_lmn[conditions2[i]] = hp.almxfl(delta_lm[conditions2[i]], np.concatenate([np.zeros(2), Sln[conditions1[i], i]]))
+                _delta_lmn[conditions2[i].astype('int')] = hp.almxfl(delta_lm[conditions2[i].astype('int')], np.concatenate([np.zeros(2), Sln[conditions1[i].astype('int'), i]]))
                 delta_lmn[i] += _delta_lmn
             TheoryCL.utils.progress_bar(which_slice, len(self.slice_in_range), indexing=True, num_refresh=len(self.slice_in_range))
         self.delta_lmn = delta_lmn
+
 
     def save_sbt(self, prefix=None):
         """Saves spherical Bessel transform coefficients.
