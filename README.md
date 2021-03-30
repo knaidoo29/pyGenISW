@@ -100,7 +100,7 @@ map_isw = hp.alm2map(alm_isw, nside)*GISW.Tcmb
 ## Citing
 
 If you use this package please provide a link to the github repository and cite
-the following paper *ArXiv Link*.
+the following paper [https://arxiv.org/abs/2103.14654](https://arxiv.org/abs/2103.14654).
 
 ## Support
 
